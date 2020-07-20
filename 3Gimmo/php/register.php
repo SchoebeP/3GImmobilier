@@ -1,30 +1,33 @@
 <?php
-$servername = "localhost";
-$dbUsername = "root";
-$dbPassword = "";
-$dbName = "3gimmo";
 
-$conn = mysqli_connect($servername,$dbUsername,$dbPassword,$dbName);
+//---------Connection DB -----------
 
-if(!$conn){
-    die("Connection faild".mysqli_error($conn));
+$dsn = 'mysql:dbname=3gimmo;host=localhost';
+$user = 'root';
+$password = '';
+
+try {
+    $dbh = new PDO($dsn, $user, $password);
+} catch (PDOException $e) {
+    echo 'Connexion échouée : ' . $e->getMessage();
 }
 
+
 if (isset($_POST["submit"])){
-    $nom =$_POST["nom"];
-    $prenom =$_POST["prenom"];
-    $email =$_POST["email"];
-    $telephone =$_POST["telephone"];
+    $nom = htmlspecialchars($_POST["nom"]);
+    $prenom =htmlspecialchars($_POST["prenom"]);
+    $email =htmlspecialchars($_POST["email"]);
+    $telephone =htmlspecialchars($_POST["telephone"]);
 
     $errorEmpty = false;
     $errorEmail = false;
-
+//-------------------Verification des champs---------- 
     if(empty($nom)){
         echo"<span class='red-text'>Votre nom n'est pas valide.</span></br>";
         $errorEmpty = true ; 
     }
     if(empty($prenom)){
-        echo"<span class='red-text'>Votre prénom n'est pas valide. </span></br>";
+        echo"<span class='red-text'>Votre prénom n'est pas valide. </s pan></br>";
         $errorEmpty = true ; 
     }
     if(empty($telephone)){
@@ -38,16 +41,19 @@ if (isset($_POST["submit"])){
 }else{
     echo"<span class='red-text'>Erreur. </span>";
 }
+
+//--------------------Insertion Data Base ---------
+
 if(($errorEmail || $errorEmpty) != 1)
 {
-    $sql = "SELECT user_email FROM user WHERE user_email='$email'";
-    $result = mysqli_query($conn, $sql);
-    if (mysqli_num_rows($result) == 0)
-    {
-        $sql = "INSERT INTO user (user_name,user_surname,user_email,user_telephone)VALUES ('$nom','$prenom','$email','$telephone')";
-        if (!mysqli_query($conn, $sql))
+    $stm = $dbh->prepare('SELECT * FROM user WHERE user_email= ?');    
+    $stm->execute(array($email));
+    if ($stm->rowCount() == 0)
+    {   
+        $insert_request = $dbh->prepare("INSERT INTO user (user_name,user_surname,user_email,user_telephone) VALUES (?,?,?,?)");
+        if (!$insert_request->execute(array($nom,$prenom,$email,$telephone)))
         {
-            echo "Error: " . $sql . "" . mysqli_error($conn);
+            echo "Erreur";
         }else {
             echo"<span class='green-text'>Vous avez bien été inscrit.</span></br>";
         }
@@ -56,6 +62,7 @@ if(($errorEmail || $errorEmpty) != 1)
     }
 }
 ?>
+
 <script>
     $("#mail,#nom,#prenom,#telephone").removeClass("error");
 
