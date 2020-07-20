@@ -12,7 +12,6 @@ try {
     echo 'Connexion échouée : ' . $e->getMessage();
 }
 
-
 if (isset($_POST["submit"])){
     $nom = htmlspecialchars($_POST["nom"]);
     $prenom =htmlspecialchars($_POST["prenom"]);
@@ -33,6 +32,9 @@ if (isset($_POST["submit"])){
     if(empty($telephone)){
         echo"<span class='red-text'>Votre téléphone n'est pas valide. </span></br>";
         $errorEmpty = true ; 
+    }elseif(!preg_match('`[0-9]{10}`',$telephone)){
+        echo"<span class='red-text'>Votre téléphone n'est pas correct </span></br>";
+        $errorEmpty = true ; 
     }
     if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
         echo "<span class='red-text'>Votre email n'est pas valide. </span></br>";
@@ -46,10 +48,21 @@ if (isset($_POST["submit"])){
 
 if(($errorEmail || $errorEmpty) != 1)
 {
-    $stm = $dbh->prepare('SELECT * FROM user WHERE user_email= ?');    
-    $stm->execute(array($email));
-    if ($stm->rowCount() == 0)
+    $email_request = $dbh->prepare('SELECT * FROM user WHERE user_email= ?');    
+    $email_request->execute(array($email));
+
+    $telephone_request = $dbh->prepare('SELECT * FROM user WHERE user_telephone= ?');    
+    $telephone_request->execute(array($telephone));
+
+    if (!$email_request->rowCount() == 0)
     {   
+        echo"<span class='red-text'>Cette adresse email a déjà été utilisé.</span> ";
+        
+    }elseif(!$telephone_request->rowCount() == 0)
+    {
+        echo"<span class='red-text'>Ce numero de téléphone a déjà été utilisé.</span> ";
+    }
+    else{
         $insert_request = $dbh->prepare("INSERT INTO user (user_name,user_surname,user_email,user_telephone) VALUES (?,?,?,?)");
         if (!$insert_request->execute(array($nom,$prenom,$email,$telephone)))
         {
@@ -57,8 +70,6 @@ if(($errorEmail || $errorEmpty) != 1)
         }else {
             echo"<span class='green-text'>Vous avez bien été inscrit.</span></br>";
         }
-    }else{
-        echo"<span class='red-text'>Cette adresse email a déjà été utilisé.</span> ";
     }
 }
 ?>
