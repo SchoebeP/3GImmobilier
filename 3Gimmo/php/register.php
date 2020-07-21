@@ -1,16 +1,7 @@
 <?php
 
 //---------Connection DB -----------
-
-$dsn = 'mysql:dbname=3gimmo;host=localhost';
-$user = 'root';
-$password = '';
-
-try {
-    $dbh = new PDO($dsn, $user, $password);
-} catch (PDOException $e) {
-    echo 'Connexion échouée : ' . $e->getMessage();
-}
+include('dbconnection.php');
 
 if (isset($_POST["submit"])){
     $nom = htmlspecialchars($_POST["nom"]);
@@ -48,6 +39,7 @@ if (isset($_POST["submit"])){
 
 if(($errorEmail || $errorEmpty) != 1)
 {
+    global $dbh;
     $email_request = $dbh->prepare('SELECT * FROM user WHERE user_email= ?');    
     $email_request->execute(array($email));
 
